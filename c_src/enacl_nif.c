@@ -176,12 +176,35 @@ ERL_NIF_TERM enif_crypto_sign_ed25519_keypair(ErlNifEnv *env, int argc, ERL_NIF_
 }
 
 static
+ERL_NIF_TERM enif_crypto_sign_ed25519_seed_keypair(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[]) {
+	ErlNifBinary pk, sk, seed;
+
+	if ((argc != 1) 
+		|| (!enif_inspect_binary(env, argv[0], &seed))
+		|| (seed.size != crypto_sign_ed25519_SEEDBYTES)) {
+		return enif_make_badarg(env);
+	}
+
+	if (!enif_alloc_binary(crypto_sign_ed25519_PUBLICKEYBYTES, &pk)) {
+		return nacl_error_tuple(env, "alloc_failed");
+	}
+
+	if (!enif_alloc_binary(crypto_sign_ed25519_SECRETKEYBYTES, &sk)) {
+		return nacl_error_tuple(env, "alloc_failed");
+	}
+
+	crypto_sign_ed25519_seed_keypair(pk.data, sk.data, seed.data);
+
+	return enif_make_tuple2(env, enif_make_binary(env, &pk), enif_make_binary(env, &sk));
+}
+
+static
 ERL_NIF_TERM enif_crypto_sign_ed25519_public_to_curve25519(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[]) {
 	ErlNifBinary curve25519_pk, ed25519_pk;
 
 	if ((argc != 1)
 			|| (!enif_inspect_binary(env, argv[0], &ed25519_pk))
-			|| (ed25519_pk.size != crypto_sign_ed25519_PUBLICKEYBYTES)) {
+			|| (ed25519_pk.size != crypto_sign_ed25519_SEEDBYTES)) {
 		return enif_make_badarg(env);
 	}
 
@@ -225,6 +248,11 @@ ERL_NIF_TERM enif_crypto_sign_ed25519_PUBLICKEYBYTES(ErlNifEnv *env, int argc, E
 static
 ERL_NIF_TERM enif_crypto_sign_ed25519_SECRETKEYBYTES(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[]) {
 	return enif_make_int64(env, crypto_sign_ed25519_SECRETKEYBYTES);
+}
+
+static
+ERL_NIF_TERM enif_crypto_sign_ed25519_SEEDBYTES(ErlNifEnv *env, int argc, ERL_NIF_TERM const argv[]) {
+	return enif_make_int64(env, crypto_sign_ed25519_SEEDBYTES);
 }
 
 /* Public-key cryptography */
@@ -1608,11 +1636,12 @@ static ErlNifFunc nif_funcs[] = {
 	erl_nif_dirty_job_cpu_bound_macro("crypto_curve25519_scalarmult", 2, enif_crypto_curve25519_scalarmult),
 
 	erl_nif_dirty_job_cpu_bound_macro("crypto_sign_ed25519_keypair", 0, enif_crypto_sign_ed25519_keypair),
+	erl_nif_dirty_job_cpu_bound_macro("crypto_sign_ed25519_seed_keypair", 1, enif_crypto_sign_ed25519_seed_keypair),
 	{"crypto_sign_ed25519_public_to_curve25519", 1, enif_crypto_sign_ed25519_public_to_curve25519},
 	{"crypto_sign_ed25519_secret_to_curve25519", 1, enif_crypto_sign_ed25519_secret_to_curve25519},
 	{"crypto_sign_ed25519_PUBLICKEYBYTES", 0, enif_crypto_sign_ed25519_PUBLICKEYBYTES},
 	{"crypto_sign_ed25519_SECRETKEYBYTES", 0, enif_crypto_sign_ed25519_SECRETKEYBYTES},
-
+	{"crypto_sign_ed25519_SEEDBYTES", 0, enif_crypto_sign_ed25519_SEEDBYTES},
 	erl_nif_dirty_job_cpu_bound_macro("randombytes", 1, enif_randombytes),
 
 	erl_nif_dirty_job_cpu_bound_macro("crypto_kx_keypair", 0, enif_crypto_kx_keypair),

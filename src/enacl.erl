@@ -82,6 +82,7 @@
 %% Ed 25519.
 -export([
          crypto_sign_ed25519_keypair/0,
+         crypto_sign_ed25519_seed_keypair/1,
          crypto_sign_ed25519_public_to_curve25519/1,
          crypto_sign_ed25519_secret_to_curve25519/1,
          crypto_sign_ed25519_public_size/0,
@@ -908,6 +909,14 @@ curve25519_scalarmult(#{ secret := Secret, base_point := BasePoint }) ->
 -spec crypto_sign_ed25519_keypair() -> #{ atom() => binary() }.
 crypto_sign_ed25519_keypair() ->
     {PK, SK} = enacl_nif:crypto_sign_ed25519_keypair(),
+    #{ public => PK, secret => SK }.
+
+%% Generates and returns a seeded key pair for the Ed 25519 signature scheme. The return value is a
+%% map in order to avoid using the public key as a secret key and vice versa.
+%% @end
+-spec crypto_sign_ed25519_seed_keypair(Seed :: binary()) -> #{ atom() => binary() }.
+crypto_sign_ed25519_seed_keypair(Seed) ->
+    {PK, SK} = enacl_nif:crypto_sign_ed25519_seed_keypair(Seed),
     #{ public => PK, secret => SK }.
 
 %% @doc crypto_sign_ed25519_public_to_curve25519/1 converts a given Ed 25519 public
