@@ -204,7 +204,7 @@ ERL_NIF_TERM enif_crypto_sign_ed25519_public_to_curve25519(ErlNifEnv *env, int a
 
 	if ((argc != 1)
 			|| (!enif_inspect_binary(env, argv[0], &ed25519_pk))
-			|| (ed25519_pk.size != crypto_sign_ed25519_SEEDBYTES)) {
+			|| (ed25519_pk.size != crypto_sign_ed25519_PUBLICKEYBYTES)) {
 		return enif_make_badarg(env);
 	}
 
